@@ -51,10 +51,10 @@ int main()
     //Text set up
     sf::Text game_text;
     game_text.setFont(font);
-    game_text.setString("Pick a game mode\nPlayer vs AI    [ Enter A ]\nTwo Player     [ Enter B ]\n");
+    game_text.setString("Pick a game mode\nPlayer vs AI     [ Enter A ]\nTwo Players    [ Enter B ]\nThree Players  [ Enter C ]");
     game_text.setCharacterSize(75.0f);
     game_text.setFillColor(sf::Color::White);
-    game_text.setPosition(sf::Vector2f(250.0f, 400.0f));
+    game_text.setPosition(sf::Vector2f(200.0f, 400.0f));
 
     sf::Text left_score_text;
     left_score_text.setFont(font);
@@ -81,6 +81,7 @@ int main()
     sf::Vector2f _paddle_size = sf::Vector2f(25.0f, 150.0f);
     Paddle player1(_paddle_size, sf::Vector2f(window.getSize().x - _paddle_size.x - _paddle_offset_x, window.getSize().y / 2 - _paddle_size.y / 2), _paddle_speed, -1, sf::Color::Red);
     Paddle player2(_paddle_size, sf::Vector2f(_paddle_offset_x, window.getSize().y / 2 - _paddle_size.y / 2), _paddle_speed, 1, sf::Color::Blue);
+    Paddle player3(_paddle_size, sf::Vector2f(_paddle_offset_x, window.getSize().y / 2 + _paddle_size.y), _paddle_speed, 1, sf::Color::Green);
         
     //Clock to count the time taken for a frame
     sf::Clock clock;
@@ -96,14 +97,17 @@ int main()
 
     bool game_started = false;
     bool has_second_player = false;
+    bool has_third_player = false;
     bool ai_enabled = true;
 
-    game_text.setString("Pick a game mode\nPlayer vs AI    [ Enter A ]\nTwo Player     [ Enter B ]\n");
+    game_text.setString("Pick a game mode\nPlayer vs AI     [ Enter A ]\nTwo Players    [ Enter B ]\nThree Players  [ Enter C ]");
     right_score_text.setString("0");
     left_score_text.setString("0");
     ball.Reset(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
     player1.Reset();
     player2.Reset();
+    player2.SetPaddleSpeed(_paddle_speed);
+    player1.shape.setSize(_paddle_size);
 
     window.clear();
     window.draw(logo);
@@ -152,6 +156,7 @@ int main()
                 game_started = true;
                 ball.ApplyVelocity(_initial_ball_speed, _initial_ball_velocity_direction);
                 has_second_player = false;
+                has_third_player = false;
                 ai_enabled = true;
                 player2.SetPaddleSpeed(_paddle_speed * 0.75f);
             }
@@ -163,7 +168,21 @@ int main()
                 game_started = true;
                 ball.ApplyVelocity(_initial_ball_speed, _initial_ball_velocity_direction);
                 has_second_player = true;
+                has_third_player = false;
                 ai_enabled = false;
+            }
+
+            //Three player mode
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::C))
+            {
+                window.clear();
+                game_started = true;
+                ball.ApplyVelocity(_initial_ball_speed, _initial_ball_velocity_direction);
+                has_second_player = true;
+                has_third_player = true;
+                ai_enabled = false;
+                player2.shape.setPosition(_paddle_offset_x, window.getSize().y / 2 - _paddle_size.y);
+                player1.shape.setSize(sf::Vector2f(_paddle_size.x, _paddle_size.y * 1.5));
             }
         }
         else
@@ -185,6 +204,16 @@ int main()
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
                     _vertical_direction += 1;
                 player2.UpdatePosition(delta_time, _vertical_direction, window.getSize().y);
+            }
+
+            if (has_third_player)
+            {
+                _vertical_direction = 0;
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::U))
+                    _vertical_direction -= 1;
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::J))
+                    _vertical_direction += 1;
+                player3.UpdatePosition(delta_time, _vertical_direction, window.getSize().y);
             }
 
             //Simple AI which does NOT play perfectly
@@ -231,6 +260,15 @@ int main()
             {
                 float ymultiplier = (ball.shape.getPosition().y - ball.shape.getRadius()) - (player2.shape.getPosition().y + player2.shape.getSize().y / 2);
                 ball.ApplyCollisionVelocity(sf::Vector2f(player2.hit_dir, ymultiplier / 100), speed_increment);
+            }
+
+            if (has_third_player)
+            {
+                if (player3.shape.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
+                {
+                    float ymultiplier = (ball.shape.getPosition().y - ball.shape.getRadius()) - (player3.shape.getPosition().y + player3.shape.getSize().y / 2);
+                    ball.ApplyCollisionVelocity(sf::Vector2f(player3.hit_dir, ymultiplier / 100), speed_increment);
+                }
             }
 
             ball.UpdatePosition(delta_time, window.getSize());
@@ -289,6 +327,8 @@ int main()
             window.draw(ball.shape);
             window.draw(player1.shape);
             window.draw(player2.shape);
+            if(has_third_player)
+                window.draw(player3.shape);
             window.display();
         }
     }
