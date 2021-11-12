@@ -22,4 +22,6 @@ public:
 	void ApplyCollisionVelocity(sf::Vector2f direction, float speed_increment);
 	void UpdatePosition(float delta_time, sf::Vector2u window_size);
 	void Reset(sf::Vector2f position);
+	void Reflect(int direction);
+	void Repel(float y_repel);
 };

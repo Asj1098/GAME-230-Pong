@@ -67,7 +67,7 @@ int main()
     right_score_text.setFont(font);
     right_score_text.setString("0");
     right_score_text.setCharacterSize(100.0f);
-    right_score_text.setFillColor(sf::Color::Red);
+    right_score_text.setFillColor(sf::Color::Black);
     right_score_text.setPosition(sf::Vector2f(3 * window.getSize().x / 4, 100.0f));
 
     //Setup the Ball
@@ -86,6 +86,12 @@ int main()
     //Clock to count the time taken for a frame
     sf::Clock clock;
 
+    //Extras
+    sf::RectangleShape obstacle;
+    sf::Vector2f obstacle_position;
+    float obstacle_speed = 300.0f;
+    sf::CircleShape repulsor;
+
     RESTART:
     //Reset Game Stuff
     int left_points = 0;
@@ -100,6 +106,7 @@ int main()
     bool has_third_player = false;
     bool ai_enabled = true;
 
+    //Core SFML
     game_text.setString("Pick a game mode\nPlayer vs AI     [ Enter A ]\nTwo Players    [ Enter B ]\nThree Players  [ Enter C ]");
     right_score_text.setString("0");
     left_score_text.setString("0");
@@ -108,6 +115,16 @@ int main()
     player2.Reset();
     player2.SetPaddleSpeed(_paddle_speed);
     player1.shape.setSize(_paddle_size);
+
+    //extras
+    obstacle.setSize(sf::Vector2f(40.0f, 100.0f));
+    obstacle.setPosition(window.getSize().x / 2 - obstacle.getSize().x / 2, 0.0f);
+    obstacle.setFillColor(sf::Color::Yellow);
+    repulsor.setRadius(50.0f);
+    repulsor.setPosition(window.getSize().x / 2 - repulsor.getRadius(), window.getSize().y / 2 - repulsor.getRadius());
+    repulsor.setOutlineThickness(15.0f);
+    repulsor.setFillColor(sf::Color::White);
+    repulsor.setOutlineColor(sf::Color::Blue);
 
     window.clear();
     window.draw(logo);
@@ -216,7 +233,7 @@ int main()
                 player3.UpdatePosition(delta_time, _vertical_direction, window.getSize().y);
             }
 
-            //Simple AI which does NOT play perfectly
+            //Simple AI
             if (ai_enabled)
             {
                 ai_frame++;
@@ -247,6 +264,32 @@ int main()
                     }
                 }
                 player2.UpdatePosition(delta_time, ai_vertical_direction, window.getSize().y);
+            }
+
+            //Extras
+            {
+                auto o_position = obstacle.getPosition();
+                if (o_position.y < 0)
+                    obstacle_speed = abs(obstacle_speed);
+
+                if (o_position.y + obstacle.getSize().y > window.getSize().y)
+                    obstacle_speed = -abs(obstacle_speed);
+                
+                o_position.y += obstacle_speed * delta_time;
+                obstacle.setPosition(o_position);
+                
+                if (obstacle.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
+                {
+                    if (ball.shape.getPosition().x <= o_position.x)
+                        ball.Reflect(-1);
+                    else
+                        ball.Reflect(1);
+                }
+                if (repulsor.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
+                {
+                    float delta_y = repulsor.getPosition().y - ball.shape.getPosition().y;
+                    ball.Repel(delta_y/2);
+                }
             }
             
             //Check for collisions
@@ -324,11 +367,13 @@ int main()
             window.clear();
             window.draw(left_score_text);
             window.draw(right_score_text);
+            window.draw(repulsor);
             window.draw(ball.shape);
             window.draw(player1.shape);
             window.draw(player2.shape);
             if(has_third_player)
                 window.draw(player3.shape);
+            window.draw(obstacle);
             window.display();
         }
     }

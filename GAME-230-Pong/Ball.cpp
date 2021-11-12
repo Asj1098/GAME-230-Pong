@@ -56,3 +56,13 @@ void Ball::Reset(sf::Vector2f position)
     velocity = sf::Vector2f(0.0f, 0.0f);
     speed = 0.0f;
 }
+
+void Ball::Reflect(int direction)
+{
+    velocity.x = direction * abs(velocity.x);
+}
+
+void Ball::Repel(float y_repel)
+{
+    velocity.y += y_repel;
+}
