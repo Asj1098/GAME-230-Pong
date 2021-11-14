@@ -9,6 +9,7 @@
 
 #include "Ball.h"
 #include "Paddle.h"
+#include "Extras.h"
 
 
 int main()
@@ -67,7 +68,7 @@ int main()
     right_score_text.setFont(font);
     right_score_text.setString("0");
     right_score_text.setCharacterSize(100.0f);
-    right_score_text.setFillColor(sf::Color::Black);
+    right_score_text.setFillColor(sf::Color::Red);
     right_score_text.setPosition(sf::Vector2f(3 * window.getSize().x / 4, 100.0f));
 
     //Setup the Ball
@@ -90,7 +91,12 @@ int main()
     sf::RectangleShape obstacle;
     sf::Vector2f obstacle_position;
     float obstacle_speed = 300.0f;
-    sf::CircleShape repulsor;
+    sf::CircleShape black_hole;
+    //sf::CircleShape power_up;
+    bool has_power_up_spawned = false;
+    int powerup_frame_counter = 0;
+    PowerUp powerup(sf::Vector2f(200.0f, 200.0f), sf::Vector2f(window.getSize().x - 200.0f, window.getSize().y - 200.0f), 30.0f, sf::Color::Magenta);
+    bool apply_power_up = false;
 
     RESTART:
     //Reset Game Stuff
@@ -120,11 +126,19 @@ int main()
     obstacle.setSize(sf::Vector2f(40.0f, 100.0f));
     obstacle.setPosition(window.getSize().x / 2 - obstacle.getSize().x / 2, 0.0f);
     obstacle.setFillColor(sf::Color::Yellow);
-    repulsor.setRadius(50.0f);
-    repulsor.setPosition(window.getSize().x / 2 - repulsor.getRadius(), window.getSize().y / 2 - repulsor.getRadius());
-    repulsor.setOutlineThickness(15.0f);
-    repulsor.setFillColor(sf::Color::White);
-    repulsor.setOutlineColor(sf::Color::Blue);
+    black_hole.setRadius(50.0f);
+    black_hole.setPosition(window.getSize().x / 2 - black_hole.getRadius(), window.getSize().y / 2 - black_hole.getRadius());
+    black_hole.setOutlineThickness(15.0f);
+    black_hole.setFillColor(sf::Color::Blue);
+    black_hole.setOutlineColor(sf::Color::Cyan);
+    //power_up.setFillColor(sf::Color::Magenta);
+    //power_up.setRadius(30.0f);
+    has_power_up_spawned = false;
+    apply_power_up = false;
+    int time_to_spawn_powerup = 400;
+    Obstacle wall_left(sf::Vector2f(10.0f, window.getSize().y), sf::Vector2f(0.0f, 0.0f), sf::Color::Blue);
+    Obstacle wall_right(sf::Vector2f(10.0f, window.getSize().y), sf::Vector2f(window.getSize().x - 10.0f, 0.0f), sf::Color::Red);
+
 
     window.clear();
     window.draw(logo);
@@ -285,10 +299,45 @@ int main()
                     else
                         ball.Reflect(1);
                 }
-                if (repulsor.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
+                if (black_hole.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
                 {
-                    float delta_y = repulsor.getPosition().y - ball.shape.getPosition().y;
+                    float delta_y = black_hole.getPosition().y - ball.shape.getPosition().y;
                     ball.Repel(delta_y/2);
+                }
+
+                powerup_frame_counter++;
+                if (powerup_frame_counter % time_to_spawn_powerup == 0)
+                {
+                    if (!powerup.is_active)
+                    {
+                        powerup.Spawn();
+                        time_to_spawn_powerup = 400 + (rand() % 200);
+                    }
+                    powerup_frame_counter = 0;
+                }
+                if (powerup.is_active)
+                {
+                    if (powerup.shape.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
+                    {
+                        powerup.Despawn();
+                        apply_power_up = true;
+                    }
+                }
+                if (wall_left.is_active)
+                {
+                    if (wall_left.shape.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
+                    {
+                        ball.Reflect(1);
+                        wall_left.is_active = false;
+                    }
+                }
+                if (wall_right.is_active)
+                {
+                    if (wall_right.shape.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
+                    {
+                        ball.Reflect(-1);
+                        wall_right.is_active = false;
+                    }
                 }
             }
             
@@ -297,12 +346,24 @@ int main()
             {
                 float ymultiplier = (ball.shape.getPosition().y - ball.shape.getRadius()) - (player1.shape.getPosition().y + player1.shape.getSize().y / 2);
                 ball.ApplyCollisionVelocity(sf::Vector2f(player1.hit_dir, ymultiplier / 100), speed_increment);
+
+                if (apply_power_up)
+                {
+                    wall_right.is_active = true;
+                    apply_power_up = false;
+                }
             }
 
             if (player2.shape.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
             {
                 float ymultiplier = (ball.shape.getPosition().y - ball.shape.getRadius()) - (player2.shape.getPosition().y + player2.shape.getSize().y / 2);
                 ball.ApplyCollisionVelocity(sf::Vector2f(player2.hit_dir, ymultiplier / 100), speed_increment);
+
+                if (apply_power_up)
+                {
+                    wall_left.is_active = true;
+                    apply_power_up = false;
+                }
             }
 
             if (has_third_player)
@@ -311,6 +372,11 @@ int main()
                 {
                     float ymultiplier = (ball.shape.getPosition().y - ball.shape.getRadius()) - (player3.shape.getPosition().y + player3.shape.getSize().y / 2);
                     ball.ApplyCollisionVelocity(sf::Vector2f(player3.hit_dir, ymultiplier / 100), speed_increment);
+                }
+                if (apply_power_up)
+                {
+                    wall_left.is_active = true;
+                    apply_power_up = false;
                 }
             }
 
@@ -325,6 +391,7 @@ int main()
                 left_score_text.setString(std::to_string(left_points));
                 ball.Reset(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
                 point_sound.play();
+                apply_power_up = false;
 
                 if (left_points >= points_to_win)
                 {
@@ -347,6 +414,7 @@ int main()
                 right_score_text.setString(std::to_string(right_points));
                 ball.Reset(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
                 point_sound.play();
+                apply_power_up = false;
 
                 if (right_points >= points_to_win)
                 {
@@ -367,13 +435,19 @@ int main()
             window.clear();
             window.draw(left_score_text);
             window.draw(right_score_text);
-            window.draw(repulsor);
+            window.draw(black_hole);
             window.draw(ball.shape);
             window.draw(player1.shape);
             window.draw(player2.shape);
             if(has_third_player)
                 window.draw(player3.shape);
             window.draw(obstacle);
+            if (powerup.is_active)
+                window.draw(powerup.shape);
+            if (wall_left.is_active)
+                window.draw(wall_left.shape);
+            if (wall_right.is_active)
+                window.draw(wall_right.shape);
             window.display();
         }
     }

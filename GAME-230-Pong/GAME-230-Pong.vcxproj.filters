@@ -24,12 +24,18 @@
     <ClCompile Include="Paddle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Extras.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ball.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Paddle.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Extras.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
