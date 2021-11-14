@@ -98,6 +98,10 @@ int main()
     PowerUp powerup(sf::Vector2f(200.0f, 200.0f), sf::Vector2f(window.getSize().x - 200.0f, window.getSize().y - 200.0f), 30.0f, sf::Color::Magenta);
     bool apply_power_up = false;
 
+    //Second ball
+    Ball ball2(20.0f, sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2), sf::Color::Red);
+    bool is_ball2_enabled = false;
+
     RESTART:
     //Reset Game Stuff
     int left_points = 0;
@@ -138,7 +142,7 @@ int main()
     int time_to_spawn_powerup = 400;
     Obstacle wall_left(sf::Vector2f(10.0f, window.getSize().y), sf::Vector2f(0.0f, 0.0f), sf::Color::Blue);
     Obstacle wall_right(sf::Vector2f(10.0f, window.getSize().y), sf::Vector2f(window.getSize().x - 10.0f, 0.0f), sf::Color::Red);
-
+    is_ball2_enabled = false;
 
     window.clear();
     window.draw(logo);
@@ -340,11 +344,78 @@ int main()
                     }
                 }
             }
+
+            //ball2
+            {
+                if (ball.speed > 600 && !is_ball2_enabled)
+                {
+                    is_ball2_enabled = true;
+                    ball2.Reset(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
+                    int i = 1;
+                    //if (rand() % 100 < 50)
+                        //i = -1;
+                    ball2.ApplyVelocity(i * _initial_ball_speed, _initial_ball_velocity_direction);
+                }
+                if (is_ball2_enabled)
+                {
+                    ball2.UpdatePosition(delta_time, window.getSize());
+
+                    if (ball2.shape.getPosition().x > window.getSize().x + 20.0f)
+                    {
+                        //Right side scored a point
+                        left_points++;
+                        left_score_text.setString(std::to_string(left_points));
+                        ball2.Reset(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
+                        point_sound.play();
+                        is_ball2_enabled = false;
+                        if (left_points >= points_to_win)
+                        {
+                            winner = -1;
+                            game_text.setString("Left Side Wins!\nPress Space to play again");
+                            game_over = true;
+                        }
+                    }
+                    if (ball2.shape.getPosition().x < -20.0f)
+                    {
+                        //Left side scored a point
+                        right_points++;
+                        right_score_text.setString(std::to_string(right_points));
+                        ball2.Reset(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
+                        point_sound.play();
+                        is_ball2_enabled = false;
+                        if (right_points >= points_to_win)
+                        {
+                            winner = 1;
+                            game_text.setString("Right Side Wins!\nPress Space to play again");
+                            game_over = true;
+                        }
+                    }
+
+                    if (player1.shape.getGlobalBounds().intersects(ball2.shape.getGlobalBounds()))
+                    {
+                        float ymultiplier = (ball2.shape.getPosition().y + ball2.shape.getRadius()) - (player1.shape.getPosition().y + player1.shape.getSize().y / 2);
+                        ball2.ApplyCollisionVelocity(sf::Vector2f(player1.hit_dir, ymultiplier / 100), 5.0f);
+                    }
+                    if (player2.shape.getGlobalBounds().intersects(ball2.shape.getGlobalBounds()))
+                    {
+                        float ymultiplier = (ball2.shape.getPosition().y + ball2.shape.getRadius()) - (player2.shape.getPosition().y + player2.shape.getSize().y / 2);
+                        ball2.ApplyCollisionVelocity(sf::Vector2f(player2.hit_dir, ymultiplier / 100), 5.0f);
+                    }
+                    if (has_third_player)
+                    {
+                        if (player3.shape.getGlobalBounds().intersects(ball2.shape.getGlobalBounds()))
+                        {
+                            float ymultiplier = (ball2.shape.getPosition().y + ball2.shape.getRadius()) - (player3.shape.getPosition().y + player3.shape.getSize().y / 2);
+                            ball2.ApplyCollisionVelocity(sf::Vector2f(player3.hit_dir, ymultiplier / 100), 5.0f);
+                        }
+                    }
+                }
+            }
             
             //Check for collisions
             if (player1.shape.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
             {
-                float ymultiplier = (ball.shape.getPosition().y - ball.shape.getRadius()) - (player1.shape.getPosition().y + player1.shape.getSize().y / 2);
+                float ymultiplier = (ball.shape.getPosition().y + ball.shape.getRadius()) - (player1.shape.getPosition().y + player1.shape.getSize().y / 2);
                 ball.ApplyCollisionVelocity(sf::Vector2f(player1.hit_dir, ymultiplier / 100), speed_increment);
 
                 if (apply_power_up)
@@ -356,7 +427,7 @@ int main()
 
             if (player2.shape.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
             {
-                float ymultiplier = (ball.shape.getPosition().y - ball.shape.getRadius()) - (player2.shape.getPosition().y + player2.shape.getSize().y / 2);
+                float ymultiplier = (ball.shape.getPosition().y + ball.shape.getRadius()) - (player2.shape.getPosition().y + player2.shape.getSize().y / 2);
                 ball.ApplyCollisionVelocity(sf::Vector2f(player2.hit_dir, ymultiplier / 100), speed_increment);
 
                 if (apply_power_up)
@@ -370,7 +441,7 @@ int main()
             {
                 if (player3.shape.getGlobalBounds().intersects(ball.shape.getGlobalBounds()))
                 {
-                    float ymultiplier = (ball.shape.getPosition().y - ball.shape.getRadius()) - (player3.shape.getPosition().y + player3.shape.getSize().y / 2);
+                    float ymultiplier = (ball.shape.getPosition().y + ball.shape.getRadius()) - (player3.shape.getPosition().y + player3.shape.getSize().y / 2);
                     ball.ApplyCollisionVelocity(sf::Vector2f(player3.hit_dir, ymultiplier / 100), speed_increment);
                 }
                 if (apply_power_up)
@@ -448,6 +519,8 @@ int main()
                 window.draw(wall_left.shape);
             if (wall_right.is_active)
                 window.draw(wall_right.shape);
+            if(is_ball2_enabled)
+                window.draw(ball2.shape);
             window.display();
         }
     }

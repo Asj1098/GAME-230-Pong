@@ -11,11 +11,11 @@ class Ball
 {
 private:
 	sf::Vector2f velocity;
-	float speed;
 	const float max_speed = 1000.0f;
 
 public:
 	sf::CircleShape shape;
+	float speed;
 
 	Ball(float _radius, sf::Vector2f _initial_Position, sf::Color _color);
 	void ApplyVelocity(float _speed, sf::Vector2f _direction);
