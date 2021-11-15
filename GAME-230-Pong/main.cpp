@@ -6,6 +6,7 @@
 #include <SFML/OpenGL.hpp>
 #include <SFML/Main.hpp>
 #include <iostream>
+#include <experimental\filesystem>
 
 #include "Ball.h"
 #include "Paddle.h"
@@ -21,10 +22,17 @@ int main()
 
     //set up V-Sync
     window.setVerticalSyncEnabled(true);
+    /*
+    std::string _cwd = std::experimental::filesystem::current_path().string();
+    for(int i=0;i<_cwd.length();i++)
+        if(_cwd[i] == '\\')
+            _cwd[i] = '/';
+    */
 
     //Load game logo (image)
     sf::Texture logo_texture;
-    if (!logo_texture.loadFromFile("A:/My Folder/Masters/Courses/GAME 230/GAME-230-Pong/GAME-230-Pong/Images/Pong.png"))
+    //if (!logo_texture.loadFromFile("A:/My Folder/Masters/Courses/GAME 230/GAME-230-Pong/GAME-230-Pong/Images/Pong.png"))
+    if (!logo_texture.loadFromFile("Pong.png"))
     {
         std::cout << "Image not loaded\n";
         return EXIT_FAILURE;
@@ -36,14 +44,16 @@ int main()
 
     //Sounds and Music
     sf::SoundBuffer point_buffer;
-    if(!point_buffer.loadFromFile("A:/My Folder/Masters/Courses/GAME 230/GAME-230-Pong/GAME-230-Pong/Music/ding.wav"))
+    //if(!point_buffer.loadFromFile("A:/My Folder/Masters/Courses/GAME 230/GAME-230-Pong/GAME-230-Pong/Music/ding.wav"))
+    if (!point_buffer.loadFromFile("ding.wav"))
         return EXIT_FAILURE;
     sf::Sound point_sound;
     point_sound.setBuffer(point_buffer);
 
     //Font loading
     sf::Font font;
-    if (!font.loadFromFile("A:/My Folder/Masters/Courses/GAME 230/GAME-230-Pong/GAME-230-Pong/Fonts/Roboto-Regular.ttf"))
+    //if (!font.loadFromFile("A:/My Folder/Masters/Courses/GAME 230/GAME-230-Pong/GAME-230-Pong/Fonts/Roboto-Regular.ttf"))
+    if (!font.loadFromFile("Roboto-Regular.ttf"))
     {
         std::cout << "Font not loaded\n";
         return EXIT_FAILURE;
@@ -118,6 +128,8 @@ int main()
 
     //Core SFML
     game_text.setString("Pick a game mode\nPlayer vs AI     [ Enter A ]\nTwo Players    [ Enter B ]\nThree Players  [ Enter C ]");
+    //game_text.setCharacterSize(15.0f);
+    //game_text.setString(_cwd);
     right_score_text.setString("0");
     left_score_text.setString("0");
     ball.Reset(sf::Vector2f(window.getSize().x / 2, window.getSize().y / 2));
